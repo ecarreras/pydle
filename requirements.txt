@@ -1,0 +1,5 @@
+# D-Bus Python bindings
+# Required for:
+# - Wayland idle detection (org.freedesktop.ScreenSaver)
+# - Spotify control via MPRIS interface
+dbus-python>=1.2.0
