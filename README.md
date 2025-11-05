@@ -11,6 +11,7 @@ A Python script that automatically pauses your music player when you're idle and
   - **cmus** (default)
   - **Rhythmbox**
   - **Audacious**
+  - **Spotify** (via D-Bus/MPRIS)
 
 ## Requirements
 
@@ -18,6 +19,7 @@ A Python script that automatically pauses your music player when you're idle and
 - Linux (X11 or Wayland)
 - For X11: libX11.so.6 and libXss.so.1
 - For Wayland (or X11 alternative): python3-dbus (dbus-python)
+- For Spotify: python3-dbus (dbus-python) - required for MPRIS control
 - One of the supported music players installed
 
 ## Usage
@@ -34,6 +36,9 @@ python idle.py --player rhythmbox
 
 # For Audacious
 python idle.py --player audacious
+
+# For Spotify
+python idle.py --player spotify
 ```
 
 ### Customize idle time threshold:
@@ -53,13 +58,13 @@ python idle.py --force-x11
 
 ### Command-line options:
 ```
-usage: idle.py [-h] [--player {cmus,rhythmbox,audacious}] [--idle-time IDLE_TIME] [--force-x11]
+usage: idle.py [-h] [--player {cmus,rhythmbox,audacious,spotify}] [--idle-time IDLE_TIME] [--force-x11]
 
 Automatically pause/resume music player when idle
 
 options:
   -h, --help            show this help message and exit
-  --player {cmus,rhythmbox,audacious}, -p {cmus,rhythmbox,audacious}
+  --player {cmus,rhythmbox,audacious,spotify}, -p {cmus,rhythmbox,audacious,spotify}
                         Music player to control (default: cmus)
   --idle-time IDLE_TIME, -t IDLE_TIME
                         Idle time threshold in seconds (default: 30)
@@ -113,6 +118,12 @@ The script automatically detects your display server and uses the appropriate id
 ### Audacious
 - Status command: `audacious --playback-status`
 - Toggle command: `audacious --play-pause`
+
+### Spotify
+- Uses D-Bus MPRIS interface (`org.mpris.MediaPlayer2.spotify`)
+- Requires: python3-dbus (dbus-python)
+- Status: Reads `PlaybackStatus` property
+- Toggle: Calls `PlayPause` method
 
 ## Extending
 

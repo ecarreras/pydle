@@ -86,6 +86,36 @@ class AudaciousPlayer(MusicPlayer):
         except (subprocess.SubprocessError, OSError, FileNotFoundError):
             pass
 
+class SpotifyPlayer(MusicPlayer):
+    """Controller for Spotify using D-Bus (MPRIS)"""
+    def __init__(self):
+        if not DBUS_AVAILABLE:
+            raise RuntimeError("D-Bus is required for Spotify control. Install python3-dbus or dbus-python package.")
+        try:
+            self.bus = dbus.SessionBus()
+            self.spotify = self.bus.get_object('org.mpris.MediaPlayer2.spotify', '/org/mpris/MediaPlayer2')
+            self.player_iface = dbus.Interface(self.spotify, 'org.mpris.MediaPlayer2.Player')
+            self.properties_iface = dbus.Interface(self.spotify, 'org.freedesktop.DBus.Properties')
+        except dbus.exceptions.DBusException as e:
+            raise RuntimeError(f"Failed to connect to Spotify via D-Bus: {e}")
+    
+    def get_status(self):
+        try:
+            playback_status = str(self.properties_iface.Get('org.mpris.MediaPlayer2.Player', 'PlaybackStatus'))
+            if playback_status == 'Playing':
+                return 'play'
+            elif playback_status == 'Paused':
+                return 'pause'
+        except dbus.exceptions.DBusException:
+            pass
+        return 'stopped'
+    
+    def toggle_play_pause(self):
+        try:
+            self.player_iface.PlayPause()
+        except dbus.exceptions.DBusException:
+            pass
+
 class IdleMonitor(object):
     """Base class for idle time monitors"""
     def get_idle_time(self):
@@ -172,6 +202,7 @@ PLAYERS = {
     'cmus': CmusPlayer,
     'rhythmbox': RhythmboxPlayer,
     'audacious': AudaciousPlayer,
+    'spotify': SpotifyPlayer,
 }
 
 def detect_session_type():
