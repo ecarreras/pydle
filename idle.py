@@ -6,7 +6,6 @@ import argparse
 
 try:
     import dbus
-    from dbus.mainloop.glib import DBusGMainLoop
     DBUS_AVAILABLE = True
 except ImportError:
     DBUS_AVAILABLE = False
@@ -125,11 +124,15 @@ class X11IdleMonitor(IdleMonitor):
     def __init__(self):
         try:
             self.xlib = ctypes.cdll.LoadLibrary('libX11.so.6')
-            self.dpy = self.xlib.XOpenDisplay(os.environ.get('DISPLAY', ':0'))
+            self.dpy = self.xlib.XOpenDisplay(os.environ.get('DISPLAY', ':0').encode())
+            if not self.dpy:
+                raise RuntimeError("Could not open X11 display")
             self.root = self.xlib.XDefaultRootWindow(self.dpy)
             self.xss = ctypes.cdll.LoadLibrary('libXss.so.1')
             self.xss.XScreenSaverAllocInfo.restype = ctypes.POINTER(XScreenSaverInfo)
             self.xss_info = self.xss.XScreenSaverAllocInfo()
+            if not self.xss_info:
+                raise RuntimeError("Could not allocate XScreenSaver info")
         except (OSError, KeyError) as e:
             raise RuntimeError(f"Failed to initialize X11 idle monitor: {e}")
     
@@ -145,28 +148,25 @@ class DBusIdleMonitor(IdleMonitor):
         
         try:
             self.bus = dbus.SessionBus()
-            self.last_input_time = time.time()
-            
-            # Try to connect to org.freedesktop.ScreenSaver for idle detection
-            # This is supported by most desktop environments
+        except dbus.exceptions.DBusException as e:
+            raise RuntimeError(f"Failed to connect to D-Bus session bus: {e}")
+        
+        # Try to connect to org.freedesktop.ScreenSaver for idle detection
+        # This is supported by most desktop environments
+        try:
             self.screensaver = self.bus.get_object('org.freedesktop.ScreenSaver', '/org/freedesktop/ScreenSaver')
             self.screensaver_iface = dbus.Interface(self.screensaver, 'org.freedesktop.ScreenSaver')
-        except dbus.exceptions.DBusException:
-            # Fallback: use a simple time-based approach
-            self.screensaver = None
-            self.screensaver_iface = None
+        except dbus.exceptions.DBusException as e:
+            raise RuntimeError(f"Failed to connect to D-Bus ScreenSaver interface: {e}")
     
     def get_idle_time(self):
-        if self.screensaver_iface:
-            try:
-                # GetSessionIdleTime returns milliseconds
-                idle_ms = self.screensaver_iface.GetSessionIdleTime()
-                return idle_ms / 1000.0
-            except dbus.exceptions.DBusException:
-                pass
-        
-        # Fallback: return 0 (not idle) - this is a limitation without proper idle detection
-        return 0
+        try:
+            # GetSessionIdleTime returns milliseconds
+            idle_ms = self.screensaver_iface.GetSessionIdleTime()
+            return idle_ms / 1000.0
+        except dbus.exceptions.DBusException as e:
+            # If D-Bus call fails, return 0 to prevent pausing
+            return 0
 
 PLAYERS = {
     'cmus': CmusPlayer,
