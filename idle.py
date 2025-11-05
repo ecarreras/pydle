@@ -90,14 +90,15 @@ class SpotifyPlayer(MusicPlayer):
     """Controller for Spotify using D-Bus (MPRIS)"""
     def __init__(self):
         if not DBUS_AVAILABLE:
-            raise RuntimeError("D-Bus is required for Spotify control. Install python3-dbus or dbus-python package.")
+            raise RuntimeError("D-Bus is required for Spotify control. Install python3-dbus (Debian/Ubuntu) or dbus-python (pip).")
         try:
             self.bus = dbus.SessionBus()
+            # Standard MPRIS D-Bus interface name for Spotify
             self.spotify = self.bus.get_object('org.mpris.MediaPlayer2.spotify', '/org/mpris/MediaPlayer2')
             self.player_iface = dbus.Interface(self.spotify, 'org.mpris.MediaPlayer2.Player')
             self.properties_iface = dbus.Interface(self.spotify, 'org.freedesktop.DBus.Properties')
         except dbus.exceptions.DBusException as e:
-            raise RuntimeError(f"Failed to connect to Spotify via D-Bus: {e}")
+            raise RuntimeError(f"Failed to connect to Spotify via D-Bus: {e}. Make sure Spotify is running.")
     
     def get_status(self):
         try:
@@ -174,7 +175,7 @@ class DBusIdleMonitor(IdleMonitor):
     """Idle monitor using D-Bus (works on both X11 and Wayland)"""
     def __init__(self):
         if not DBUS_AVAILABLE:
-            raise RuntimeError("D-Bus is not available. Install python3-dbus or dbus-python package.")
+            raise RuntimeError("D-Bus is not available. Install python3-dbus (Debian/Ubuntu) or dbus-python (pip).")
         
         try:
             self.bus = dbus.SessionBus()
