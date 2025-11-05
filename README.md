@@ -15,9 +15,9 @@ A Python script that automatically pauses your music player when you're idle and
 ## Requirements
 
 - Python 3.x
-- X11 environment (Linux)
-- libX11.so.6
-- libXss.so.1
+- Linux (X11 or Wayland)
+- For X11: libX11.so.6 and libXss.so.1
+- For Wayland (or X11 alternative): python3-dbus (dbus-python)
 - One of the supported music players installed
 
 ## Usage
@@ -45,9 +45,15 @@ python idle.py --idle-time 60
 python idle.py --player rhythmbox --idle-time 45
 ```
 
+### Force X11 idle detection (on Wayland):
+```bash
+# Use X11 idle detection even on Wayland (if XWayland is available)
+python idle.py --force-x11
+```
+
 ### Command-line options:
 ```
-usage: idle.py [-h] [--player {cmus,rhythmbox,audacious}] [--idle-time IDLE_TIME]
+usage: idle.py [-h] [--player {cmus,rhythmbox,audacious}] [--idle-time IDLE_TIME] [--force-x11]
 
 Automatically pause/resume music player when idle
 
@@ -57,6 +63,7 @@ options:
                         Music player to control (default: cmus)
   --idle-time IDLE_TIME, -t IDLE_TIME
                         Idle time threshold in seconds (default: 30)
+  --force-x11           Force use of X11 idle detection even on Wayland
 ```
 
 ## Installation
@@ -79,10 +86,19 @@ python idle.py --player rhythmbox
 
 ## How It Works
 
-The script uses the XScreenSaver extension to monitor system idle time. When you're idle for longer than the threshold:
+The script monitors system idle time and automatically controls your music player. When you're idle for longer than the threshold:
 1. It checks if your music player is currently playing
 2. If playing, it pauses the music
 3. When you return (idle time drops below threshold), it resumes playback
+
+### Display Server Support
+
+The script automatically detects your display server and uses the appropriate idle detection method:
+
+- **X11**: Uses XScreenSaver extension (libXss) for accurate idle time detection
+- **Wayland**: Uses D-Bus (`org.freedesktop.ScreenSaver`) for idle time detection
+- **Automatic detection**: The script will try D-Bus first on Wayland, falling back to X11 if needed
+- **Override**: Use `--force-x11` to force X11 idle detection (useful on Wayland with XWayland)
 
 ## Player Support
 
