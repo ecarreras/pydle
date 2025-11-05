@@ -79,12 +79,22 @@ git clone https://github.com/ecarreras/pydle.git
 cd pydle
 ```
 
-2. Make the script executable (optional):
+2. Install Python dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+Or on Debian/Ubuntu:
+```bash
+sudo apt-get install python3-dbus
+```
+
+3. Make the script executable (optional):
 ```bash
 chmod +x idle.py
 ```
 
-3. Run it:
+4. Run it:
 ```bash
 python idle.py --player rhythmbox
 ```
