@@ -21,49 +21,64 @@ class CmusPlayer(MusicPlayer):
     """Controller for cmus music player"""
     def get_status(self):
         try:
-            status = subprocess.getoutput("cmus-remote -Q | grep status")
-            if status.find('playing') > -1:
+            result = subprocess.run(['cmus-remote', '-Q'], 
+                                  capture_output=True, text=True, timeout=5)
+            status = result.stdout
+            if 'playing' in status:
                 return 'play'
-            elif status.find('paused') > -1:
+            elif 'paused' in status:
                 return 'pause'
-        except:
+        except (subprocess.SubprocessError, OSError, FileNotFoundError):
             pass
         return 'stopped'
     
     def toggle_play_pause(self):
-        os.system("cmus-remote -u")
+        try:
+            subprocess.run(['cmus-remote', '-u'], timeout=5)
+        except (subprocess.SubprocessError, OSError, FileNotFoundError):
+            pass
 
 class RhythmboxPlayer(MusicPlayer):
     """Controller for Rhythmbox music player"""
     def get_status(self):
         try:
-            status = subprocess.getoutput("rhythmbox-client --print-playing-format '%st'")
-            if status.find('Playing') > -1:
+            result = subprocess.run(['rhythmbox-client', '--print-playing-format', '%st'],
+                                  capture_output=True, text=True, timeout=5)
+            status = result.stdout
+            if 'Playing' in status:
                 return 'play'
-            elif status.find('Paused') > -1:
+            elif 'Paused' in status:
                 return 'pause'
-        except:
+        except (subprocess.SubprocessError, OSError, FileNotFoundError):
             pass
         return 'stopped'
     
     def toggle_play_pause(self):
-        os.system("rhythmbox-client --play-pause")
+        try:
+            subprocess.run(['rhythmbox-client', '--play-pause'], timeout=5)
+        except (subprocess.SubprocessError, OSError, FileNotFoundError):
+            pass
 
 class AudaciousPlayer(MusicPlayer):
     """Controller for Audacious music player"""
     def get_status(self):
         try:
-            status = subprocess.getoutput("audacious --playback-status")
-            if status.find('playing') > -1:
+            result = subprocess.run(['audacious', '--playback-status'],
+                                  capture_output=True, text=True, timeout=5)
+            status = result.stdout
+            if 'playing' in status:
                 return 'play'
-            elif status.find('paused') > -1:
+            elif 'paused' in status:
                 return 'pause'
-        except:
+        except (subprocess.SubprocessError, OSError, FileNotFoundError):
             pass
         return 'stopped'
     
     def toggle_play_pause(self):
-        os.system("audacious --play-pause")
+        try:
+            subprocess.run(['audacious', '--play-pause'], timeout=5)
+        except (subprocess.SubprocessError, OSError, FileNotFoundError):
+            pass
 
 class XScreenSaverInfo(ctypes.Structure):
     """ typedef struct { ... } XScreenSaverInfo; """
